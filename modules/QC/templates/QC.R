@@ -2,9 +2,16 @@
 args = commandArgs(trailingOnly = TRUE)
 # Parse key=value pairs
 args_list = list()
-for (arg in args) {
-  kv = strsplit(arg, "=")[[1]]
-  args_list[[kv[1]]] = kv[2]
+i = 1
+while (i <= length(args)) {
+  if (startsWith(args[i], "--")) {
+    key = substring(args[i], 3)           # remove leading "--"
+    value = args[i + 1]                   # next argument is the value
+    args_list[[key]] = value
+    i = i + 2
+  } else {
+    i = i + 1
+  }
 }
 
 print(args_list)
