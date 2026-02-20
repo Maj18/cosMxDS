@@ -6,6 +6,9 @@ for (arg in args) {
   kv = strsplit(arg, "=")[[1]]
   args_list[[kv[1]]] = kv[2]
 }
+
+print(args_list)
+
 dataset = args_list[["batch"]]
 outdir = args_list[["outdir"]]
 minSolidity = args_list[["minSolidity"]]
