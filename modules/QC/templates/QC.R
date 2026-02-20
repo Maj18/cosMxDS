@@ -11,19 +11,21 @@ outdir = args_list[["outdir"]]
 minSolidity = args_list[["minSolidity"]]
 minArea.um2 = args_list[["minArea.um2"]]
 minnCount_RNA = args_list[["minnCount_RNA"]]
+print(minnCount_RNA)
 # dataset = "Eleni_Female"
 # outdir = "../results/QC/"
 # minSolidity = 0.5
 # minArea.um2 = 20
 # minnCount_RNA = 25
 
+print("Load packages...")
 library(Seurat)
 library(SeuratData)
 library(ggplot2)
 library(patchwork)
 library(dplyr)
 
-
+print()("Running QC for dataset: ", dataset)
 OUTDIR = paste0(outdir, "/",dataset, "/")
 dir.create(OUTDIR, recursive=TRUE, showWarnings=FALSE)
 dat = readRDS(paste0("../data/Shared_Folder/seuratObject_", dataset, ".RDS"))
