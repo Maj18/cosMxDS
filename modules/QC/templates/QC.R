@@ -25,7 +25,7 @@ library(ggplot2)
 library(patchwork)
 library(dplyr)
 
-print()("Running QC for dataset: ", dataset)
+print(paste0("Running QC for dataset: ", dataset))
 OUTDIR = paste0(outdir, "/",dataset, "/")
 dir.create(OUTDIR, recursive=TRUE, showWarnings=FALSE)
 dat = readRDS(paste0("../data/Shared_Folder/seuratObject_", dataset, ".RDS"))
