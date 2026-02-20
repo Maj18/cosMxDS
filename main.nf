@@ -27,11 +27,11 @@ println """\
 */
 
 // include { FILTERBAM } from '../modules/FILTERBAM'
-include { QC  } from './subworkflows/QC.nf'
+include { QC_workflow  } from './subworkflows/QC.nf'
 
 workflow ENTRY_QC {
     batch = Channel.from(params.batch.split(','))
-    QC(batch)
+    QC_workflow(batch)
 }
 
 workflow.onComplete {
