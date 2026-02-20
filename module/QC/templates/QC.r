@@ -9,8 +9,14 @@ for (arg in args) {
 }
 batch = args_list[["batch"]]
 outdir = args_list[["outdir"]]
+minSolidity = args_list[["minSolidity"]]
+minArea.um2 = args_list[["minArea.um2"]]
+minnCount_RNA = args_list[["minnCount_RNA"]]
 # dataset = "Eleni_Female"
 # outdir = "../results/QC/"
+# minSolidity = 0.5
+# minArea.um2 = 20
+# minnCount_RNA = 25
 
 library(Seurat)
 library(SeuratData)
@@ -23,6 +29,27 @@ OUTDIR = paste0(outdir, "/",dataset, "/")
 dir.create(OUTDIR, recursive=TRUE, showWarnings=FALSE)
 dat = readRDS(paste0("../data/Shared_Folder/seuratObject_", dataset, ".RDS"))
 dat
+
+# Kmean clustering to define tissues
+km = kmeans(dat@meta.data[,c("x_slide_mm", "y_slide_mm")], centers = 4, nstart = 25)
+dat@meta.data$coord_cluster = km$cluster
+temp = dat@meta.data %>% group_by(coord_cluster) %>% 
+  summarize(meanx = mean(x_slide_mm), meany=mean(y_slide_mm)) %>%
+  arrange(meanx, meany) %>% 
+  mutate(Tissue=c(paste0("Injury", 1:2), paste0("Normal", 1:2)))
+mapping = setNames(temp$Tissue, as.character(temp$coord_cluster))
+pdf(paste0(OUTDIR, "/Tissue.pdf"), h=10, w=10)
+  Idents(dat) = dat@meta.data$coord_cluster
+  print(ImageDimPlot(dat, fov = dataset))
+  dat = RenameIdents(dat,
+                    `1` = mapping["1"],
+                    `2` = mapping["2"],
+                    `3` = mapping["3"],
+                    `4` = mapping["4"])
+  dat@meta.data$Tissue = Idents(dat)
+  print(ImageDimPlot(dat, fov = dataset))
+dev.off()
+rm(mapping, temp)
 
 # Before filtering
 plotQC = function(dat, outDIR=paste0(OUTDIR, "/beforeFiltering/")) {
@@ -38,8 +65,10 @@ plotQC = function(dat, outDIR=paste0(OUTDIR, "/beforeFiltering/")) {
     "propNegative",
     "percOfDataFromError"
   )
-  pdf(paste0(outDIR, "/coreQC.pdf"), h=7.5, w=7.5)
-  print(VlnPlot(dat, features = features_qc, ncol = 3, pt.size=0))
+  dat@meta.data$Tissue = 
+    factor(dat@meta.data$Tissue, levels = c(paste0("Normal", 1:2), paste0("Injury", 1:2)))
+  pdf(paste0(outDIR, "/coreQC.pdf"), h=7.5, w=12)
+  print(VlnPlot(dat, features = features_qc, ncol = 3, pt.size=0, group.by="Tissue"))
   dev.off()
 
   ## Scatter relationships
@@ -72,7 +101,15 @@ plotQC = function(dat, outDIR=paste0(OUTDIR, "/beforeFiltering/")) {
 outDIR=paste0(OUTDIR, "/beforeFiltering/")
 dir.create(outDIR, recursive=T, showWarnings=FALSE)
 dat = plotQC(dat, outDIR=outDIR)
-
+## Extra QC plots
+pdf(paste0(outDIR, "/extraQC.pdf"), h=10, w=10)
+  print(ImageDimPlot(dat, fov = dataset, cols = "red", 
+    cells = WhichCells(dat_filtered, expression=Area.um2 < minArea.um2))+ggtitle(paste0("Area.um2<",minArea.um2)))
+  print(ImageDimPlot(dat, fov = dataset, cols = "red", 
+    cells = WhichCells(dat_filtered, expression=Solidity < minSolidity))+ggtitle(paste0("Solidity<",minSolidity)))
+  print(ImageDimPlot(dat, fov = dataset, cols = "red", 
+    cells = WhichCells(dat_filtered, expression=nCount_RNA < minnCount_RNA))+ggtitle(paste0("nCount_RNA<",minnCount_RNA)))
+dev.off()
 
 
 
@@ -117,7 +154,10 @@ QClogf = capture.output({
     dat@meta.data$qcFlagsCellArea == "Pass" &
     !dat@meta.data$qcCellsFlagged &
     dat@meta.data$qcCellsPassed &
-    dat@meta.data$qcFlagsFOV == "Pass")
+    dat@meta.data$qcFlagsFOV == "Pass" &
+    Solidity > minSolidity &
+    Area.um2 > minArea.um2 &
+    nCount_RNA > minnCount_RN)
   ]
 })
 
@@ -128,12 +168,16 @@ passedCells = rownames(dat@meta.data)[
   dat@meta.data$qcFlagsCellArea == "Pass" &
   !dat@meta.data$qcCellsFlagged &
   dat@meta.data$qcCellsPassed &
-  dat@meta.data$qcFlagsFOV == "Pass")
+  dat@meta.data$qcFlagsFOV == "Pass" &
+  Solidity > minSolidity &
+  Area.um2 > minArea.um2 &
+  nCount_RNA > minnCount_RN)
 ]
 dat = UpdateSeuratObject(dat)
 dat_filtered = subset(dat, cells=passedCells)
 saveRDS(dat_filtered, paste0(OUTDIR, "/", dataset, "_filtered.RDS"))
 # dat_filtered = readRDS(paste0(OUTDIR, "/", dataset, "_filtered.RDS"))
+# dat_filtered$smallCells = ifelse(dat_filtered@meta.data$Area.um2 < 20, "small", "large")
 
 QCloga = capture.output({
   cat("After filtering...\n")
@@ -150,13 +194,11 @@ writeLines(QClog, paste0(OUTDIR, "/QClog.txt"))
 
 
 
-
-
 # Plot QC after filteirng:
 outDIR2=paste0(OUTDIR, "/afterFiltering/")
 dir.create(outDIR2, recursive=T, showWarnings=FALSE)
 plotQC(dat, outDIR=outDIR2)
+quantile(dat@meta.data$nCount_RNA, probs=0.005)
 
 out = capture.output(sessionInfo())
 writeLines(out, paste0(OUTDIR, "/sessionInfo.txt"))
-
