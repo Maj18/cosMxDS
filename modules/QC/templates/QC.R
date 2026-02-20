@@ -21,6 +21,7 @@ outdir = args_list[["outdir"]]
 minSolidity = args_list[["minSolidity"]]
 minArea.um2 = args_list[["minArea.um2"]]
 minnCount_RNA = args_list[["minnCount_RNA"]]
+INDIR = args_list[["INDIR"]]
 print(minnCount_RNA)
 # dataset = "Eleni_Female"
 # outdir = "../results/QC/"
@@ -38,7 +39,7 @@ library(dplyr)
 print(paste0("Running QC for dataset: ", dataset))
 OUTDIR = paste0(outdir, "/",dataset, "/")
 dir.create(OUTDIR, recursive=TRUE, showWarnings=FALSE)
-dat = readRDS(paste0("../data/Shared_Folder/seuratObject_", dataset, ".RDS"))
+dat = readRDS(paste0(INDIR, "/seuratObject_", dataset, ".RDS"))
 dat
 
 # Kmean clustering to define tissues
