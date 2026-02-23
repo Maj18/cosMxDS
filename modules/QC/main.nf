@@ -2,7 +2,7 @@ process QC {
     publishDir "${params.outdir}/",
         mode: 'copy'
     tag "QC"
-    label "lowMemST"
+    label "fatMemMT"
     conda "${moduleDir}/environment.yml"
     container "${ workflow.containerEngine == 'singularity' || workflow.containerEngine == "apptainer" ?
         'oras://community.wave.seqera.io/library/r-seurat-data_r-dplyr_r-ggplot2_r-patchwork_r-seurat:482e7aa7efc6ab6f':
