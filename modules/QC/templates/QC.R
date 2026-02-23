@@ -116,11 +116,11 @@ dat = plotQC(dat, outDIR=outDIR)
 ## Extra QC plots
 pdf(paste0(outDIR, "/extraQC.pdf"), h=10, w=10)
   print(ImageDimPlot(dat, fov = dataset, cols = "red", 
-    cells = WhichCells(dat_filtered, expression=Area.um2 < minArea.um2))+ggtitle(paste0("Area.um2<",minArea.um2)))
+    cells = WhichCells(dat, expression=Area.um2 < minArea.um2))+ggtitle(paste0("Area.um2<",minArea.um2)))
   print(ImageDimPlot(dat, fov = dataset, cols = "red", 
-    cells = WhichCells(dat_filtered, expression=Solidity < minSolidity))+ggtitle(paste0("Solidity<",minSolidity)))
+    cells = WhichCells(dat, expression=Solidity < minSolidity))+ggtitle(paste0("Solidity<",minSolidity)))
   print(ImageDimPlot(dat, fov = dataset, cols = "red", 
-    cells = WhichCells(dat_filtered, expression=nCount_RNA < minnCount_RNA))+ggtitle(paste0("nCount_RNA<",minnCount_RNA)))
+    cells = WhichCells(dat, expression=nCount_RNA < minnCount_RNA))+ggtitle(paste0("nCount_RNA<",minnCount_RNA)))
 dev.off()
 
 
