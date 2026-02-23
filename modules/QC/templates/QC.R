@@ -79,11 +79,14 @@ plotQC = function(dat, outDIR=paste0(OUTDIR, "/beforeFiltering/")) {
   )
   dat@meta.data$Tissue = 
     factor(dat@meta.data$Tissue, levels = c(paste0("Normal", 1:2), paste0("Injury", 1:2)))
+  print("Violin plot...")
   pdf(paste0(outDIR, "/coreQC.pdf"), h=7.5, w=12)
   print(VlnPlot(dat, features = features_qc, ncol = 3, pt.size=0, group.by="Tissue"))
   dev.off()
 
   ## Scatter relationships
+  Idents(dat) = dataset
+  print("Scatter plot ...")
   pdf(paste0(outDIR, "/QC_scatterplot.pdf"), h=3, w=7)
   p1 = FeatureScatter(dat, feature1 = "nCount_RNA", feature2 = "propNegative")
   p2 = FeatureScatter(dat, feature1 = "Area.um2", feature2 = "nCount_RNA")
@@ -91,6 +94,7 @@ plotQC = function(dat, outDIR=paste0(OUTDIR, "/beforeFiltering/")) {
   dev.off()
 
   ## Spatial QC
+  print("Spatial QC ...")
   dir.create(paste0(outDIR, "/spatialQC"), recursive=T, showWarnings=FALSE)
   ### scale some of the metadata
   meta.data = dat@meta.data
@@ -114,6 +118,7 @@ outDIR=paste0(OUTDIR, "/beforeFiltering/")
 dir.create(outDIR, recursive=T, showWarnings=FALSE)
 dat = plotQC(dat, outDIR=outDIR)
 ## Extra QC plots
+print("extra QC plots ...")
 pdf(paste0(outDIR, "/extraQC.pdf"), h=10, w=10)
   print(ImageDimPlot(dat, fov = dataset, cols = "red", 
     cells = WhichCells(dat, expression=Area.um2 < minArea.um2))+ggtitle(paste0("Area.um2<",minArea.um2)))
@@ -126,6 +131,7 @@ dev.off()
 
 
 # QC log
+print("QC log before filtering ...")
 QClogb = capture.output({
   cat("Before filtering...\n")
   features_qc = c(
@@ -157,6 +163,7 @@ QClogb = capture.output({
   dat@meta.data[, features_qc] %>% apply(., 2, summary)
 })
 
+print("QC log filtering ...")
 QClogf = capture.output({
   cat ("Keep a copy of failed cells:\n")
   rownames(dat@meta.data)[
@@ -191,6 +198,7 @@ saveRDS(dat_filtered, paste0(OUTDIR, "/", dataset, "_filtered.RDS"))
 # dat_filtered = readRDS(paste0(OUTDIR, "/", dataset, "_filtered.RDS"))
 # dat_filtered$smallCells = ifelse(dat_filtered@meta.data$Area.um2 < 20, "small", "large")
 
+print("QC log after filtering ...")
 QCloga = capture.output({
   cat("After filtering...\n")
   dat_filtered@meta.data[, flags] %>%
@@ -207,6 +215,7 @@ writeLines(QClog, paste0(OUTDIR, "/QClog.txt"))
 
 
 # Plot QC after filteirng:
+print("Plot QC after filteirng ...")
 outDIR2=paste0(OUTDIR, "/afterFiltering/")
 dir.create(outDIR2, recursive=T, showWarnings=FALSE)
 plotQC(dat, outDIR=outDIR2)
