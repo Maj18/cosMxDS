@@ -174,9 +174,9 @@ QClogf = capture.output({
     !dat@meta.data$qcCellsFlagged &
     dat@meta.data$qcCellsPassed &
     dat@meta.data$qcFlagsFOV == "Pass" &
-    Solidity > minSolidity &
-    Area.um2 > minArea.um2 &
-    nCount_RNA > minnCount_RN)
+    dat@meta.data$Solidity > minSolidity &
+    dat@meta.data$Area.um2 > minArea.um2 &
+    dat@meta.data$nCount_RNA > minnCount_RN)
   ]
 })
 
@@ -188,9 +188,9 @@ passedCells = rownames(dat@meta.data)[
   !dat@meta.data$qcCellsFlagged &
   dat@meta.data$qcCellsPassed &
   dat@meta.data$qcFlagsFOV == "Pass" &
-  Solidity > minSolidity &
-  Area.um2 > minArea.um2 &
-  nCount_RNA > minnCount_RN)
+  dat@meta.data$Solidity > minSolidity &
+  dat@meta.data$Area.um2 > minArea.um2 &
+  dat@meta.data$nCount_RNA > minnCount_RN)
 ]
 dat = UpdateSeuratObject(dat)
 dat_filtered = subset(dat, cells=passedCells)
