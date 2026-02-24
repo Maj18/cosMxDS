@@ -5,8 +5,8 @@ process QC {
     label "highMemMT2"
     conda "${moduleDir}/environment.yml"
     container "${ workflow.containerEngine == 'singularity' || workflow.containerEngine == "apptainer" ?
-        'oras://community.wave.seqera.io/library/r-seurat-data_r-dplyr_r-ggplot2_r-patchwork_r-seurat:482e7aa7efc6ab6f':
-        'community.wave.seqera.io/library/r-seurat-data_r-dplyr_r-ggplot2_r-patchwork_r-seurat:cdc203cd018c3c8b' }"
+        'docker://yuanli202004/seurat5.4_doubletfinder:latest':
+        'docker://yuanli202004/seurat5.4_doubletfinder:latest' }"
 
     input:
         val(batch)
