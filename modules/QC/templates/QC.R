@@ -32,7 +32,7 @@ print(minnCount_RNA)
 # minArea.um2 = 20
 # minnCount_RNA = 25
 # doubletProportion = 0.074
-# INDIR = "/cfs/klemming/projects/supr/naiss2026-4-253/data/Shared_Folder/"
+# INDIR = "../data/Shared_Folder/"
 # numCore = 4
 
 
@@ -41,7 +41,15 @@ print(minnCount_RNA)
 rmDoublets = function(data.filt, doubletProportion= 0.074, numCore=1) {
   # before doing doublet detection we need to run scaling, variable gene selection and PCA, as well as UMAP for visualization. 
   # These steps will be explored in more detail in coming exercises.
+  # Remove unnecessary:
   data.filt@images = list()
+  data.filt = DietSeurat(
+    object = data.filt,
+    assays = "RNA",       # keep only RNA
+    counts = TRUE,        # keep counts
+    data = TRUE          # keep normalized data
+  )
+
   DefaultAssay(data.filt) = "RNA"
   data.filt = NormalizeData(data.filt)
   data.filt = ScaleData(data.filt)
@@ -61,12 +69,16 @@ rmDoublets = function(data.filt, doubletProportion= 0.074, numCore=1) {
 
   # pK identification (no ground-truth)
   # pK: neighborhood size, i.e. the number of neighbors (in percentage) to consider when calculating pANN
-  sweep.list = invisible(paramSweep(data.filt, PCs = 1:10, num.cores = numCore/2))
+  ## Downsample the object 
+  nCellsSample = min(100000, ncol(data.filt))  # number of cells to sample
+  set.seed(123)  # for reproducibility
+  cells.sample = sample(Cells(data.filt), nCellsSample)
+  data.sub = subset(data.filt, cells = cells.sample)
+  sweep.list = invisible(paramSweep(data.sub, PCs = 1:10, num.cores = numCore/2))
   sweep.stats = summarizeSweep(sweep.list)
   pdf("find.pK.plots.pdf")
-  bcmvn = find.pK(sweep.stats)
+    bcmvn = find.pK(sweep.stats)
   dev.off()
-
   # Optimal pK are selected by maximizing BCmvn (https://www.sciencedirect.com/science/article/pii/S2405471219300730)
   bcmvn.max = bcmvn[which.max(bcmvn$BCmetric),]
   optimal.pk = bcmvn.max$pK
@@ -86,8 +98,6 @@ rmDoublets = function(data.filt, doubletProportion= 0.074, numCore=1) {
 }
  
 
-
-
 print("Load packages...")
 library(Seurat)
 library(SeuratData)
@@ -100,6 +110,7 @@ print(paste0("Running QC for dataset: ", dataset))
 OUTDIR = paste0(outdir, "/",dataset, "/")
 dir.create(OUTDIR, recursive=TRUE, showWarnings=FALSE)
 dat = readRDS(paste0(INDIR, "/seuratObject_", dataset, ".RDS"))
+dat = UpdateSeuratObject(dat)
 dat
 
 # Kmean clustering to define tissues
@@ -264,7 +275,6 @@ passedCells = rownames(dat@meta.data)[
 print("Only keep genes that non-0 counts in more than 5 cells ...")
 passedGenes = 
   rownames(dat@assays$RNA@counts)[rowSums(dat@assays$RNA@counts>0) > 5]
-dat = UpdateSeuratObject(dat)
 dat_filtered = subset(dat, cells=passedCells, features=passedGenes)
 # saveRDS(dat_filtered, paste0(OUTDIR, "/", dataset, "_filtered.RDS"))
 # dat_filtered = readRDS(paste0(OUTDIR, "/", dataset, "_filtered.RDS"))
@@ -294,7 +304,7 @@ gc()
 metadata = 
   rmDoublets(data.filt=dat_filtered, doubletProportion= doubletProportion, numCore=numCore)
 pdf(paste0(outDIR, "/Doublets_QC.pdf"), h=10, w=10)
-print(ImageDimPlot(dat_filtered, fov = dataset, cols = "red", 
+  print(ImageDimPlot(dat_filtered, fov = dataset, cols = "red", 
       cells = rownames(dat_filtered@meta.data)[metadata$doublet_finder=="Doublet"]) + 
         ggtitle("Doublets"))
 dev.off()
@@ -302,8 +312,8 @@ dat_filtered@meta.data = metadata
 print("Remove doublets ...")
 dat_filtered = subset(dat_filtered, 
   cells=rownames(dat_filtered@meta.data)[metadata$doublet_finder=="Singlet"])
+print(dat_filtered)
 saveRDS(dat_filtered, paste0(OUTDIR, "/", dataset, "_filtered.RDS"))
-
 
 
 print("QC log after filtering ...")
