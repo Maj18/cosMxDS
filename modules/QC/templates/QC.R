@@ -283,7 +283,7 @@ dat_filtered = subset(dat, cells=passedCells, features=passedGenes)
 # dev.off()
 
 print("Detect doublets using doubletFinder ...")
-source("rmDoublets.R")
+# source("rmDoublets.R")
 metadata = rmDoublets(data.filt=dat_filtered, doubletProportion= doubletProportion)
 pdf(paste0(outDIR, "/Doublets_QC.pdf"), h=10, w=10)
 print(ImageDimPlot(dat_filtered, fov = dataset, cols = "red", 
