@@ -52,7 +52,6 @@ rmDoublets = function(data.filt, doubletProportion= 0.074, numCore=1) {
   # set seed
   # set seed
   set.seed(8)
-
   # The expected doublet rate as suggested by 10X
   # The percentage of droplets containing two or more cells is influenced by the quantity of cells loaded into the sequencing machine.
   # ref: https://uofuhealth.utah.edu/huntsman/shared-resources/gcb/htg/single-cell/genomics-10x
@@ -329,7 +328,7 @@ print("Plot QC after filteirng ...")
 outDIR2=paste0(OUTDIR, "/afterFiltering/")
 dir.create(outDIR2, recursive=T, showWarnings=FALSE)
 plotQC(dat_filtered, outDIR=outDIR2)
-quantile(dat_filtered@meta.data$nCount_RNA, probs=0.005)
+# quantile(dat_filtered@meta.data$nCount_RNA, probs=0.005)
 
 out = capture.output(sessionInfo())
 writeLines(out, paste0(OUTDIR, "/sessionInfo.txt"))
