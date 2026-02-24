@@ -22,12 +22,14 @@ minSolidity = args_list[["minSolidity"]]
 minArea.um2 = args_list[["minArea.um2"]]
 minnCount_RNA = args_list[["minnCount_RNA"]]
 INDIR = args_list[["INDIR"]]
+doubletProportion = args_list[["doubletProportion"]]
 print(minnCount_RNA)
 # dataset = "Eleni_Female"
 # outdir = "../results/QC/"
 # minSolidity = 0.5
 # minArea.um2 = 20
 # minnCount_RNA = 25
+# doubletProportion = 0.074
 # INDIR = "/cfs/klemming/projects/supr/naiss2026-4-253/data/Shared_Folder/"
 
 print("Load packages...")
@@ -231,7 +233,7 @@ dat_filtered = subset(dat, cells=passedCells, features=passedGenes)
 
 print("Detect doublets using doubletFinder ...")
 source("rmDoublets.R")
-metadata = rmDoublets(data.filt=dat_filtered, doubletProportion= 0.074)
+metadata = rmDoublets(data.filt=dat_filtered, doubletProportion= doubletProportion)
 pdf(paste0(outDIR, "/Doublets_QC.pdf"), h=10, w=10)
 print(ImageDimPlot(dat_filtered, fov = dataset, cols = "red", 
       cells = rownames(dat_filtered@meta.data)[metadata$doublet_finder=="Doublet"]) + 
@@ -242,6 +244,8 @@ print("Remove doublets ...")
 dat_filtered = subset(dat, 
   cells=rownames(dat_filtered@meta.data)[metadata$doublet_finder=="Singlet"])
 saveRDS(dat_filtered, paste0(OUTDIR, "/", dataset, "_filtered.RDS"))
+
+
 
 print("QC log after filtering ...")
 QCloga = capture.output({
