@@ -28,6 +28,7 @@ print(minnCount_RNA)
 # minSolidity = 0.5
 # minArea.um2 = 20
 # minnCount_RNA = 25
+# INDIR = "/cfs/klemming/projects/supr/naiss2026-4-253/data/Shared_Folder/"
 
 print("Load packages...")
 library(Seurat)
@@ -35,6 +36,7 @@ library(SeuratData)
 library(ggplot2)
 library(patchwork)
 library(dplyr)
+library(DoubletFinder)
 
 print(paste0("Running QC for dataset: ", dataset))
 OUTDIR = paste0(outdir, "/",dataset, "/")
@@ -63,6 +65,13 @@ pdf(paste0(OUTDIR, "/Tissue.pdf"), h=10, w=10)
 dev.off()
 rm(mapping, temp)
 
+# FOV summary 
+# dat@meta.data = dat@meta.data %>% as.data.frame() %>%
+#   group_by(fov) %>%
+#   summarize(nCount_RNA_FOVmean = mean(nCount_RNA)) %>%
+#   right_join(dat@meta.data)
+
+
 # Before filtering
 plotQC = function(dat, outDIR=paste0(OUTDIR, "/beforeFiltering/")) {
   ## core QC
@@ -85,8 +94,8 @@ plotQC = function(dat, outDIR=paste0(OUTDIR, "/beforeFiltering/")) {
   dev.off()
 
   ## Scatter relationships
-  Idents(dat) = dataset
   print("Scatter plot ...")
+  Idents(dat) = dataset
   pdf(paste0(outDIR, "/QC_scatterplot.pdf"), h=3, w=7)
   p1 = FeatureScatter(dat, feature1 = "nCount_RNA", feature2 = "propNegative")
   p2 = FeatureScatter(dat, feature1 = "Area.um2", feature2 = "nCount_RNA")
@@ -104,7 +113,7 @@ plotQC = function(dat, outDIR=paste0(OUTDIR, "/beforeFiltering/")) {
   }
   
   dat@meta.data = meta.data
-  lapply(c(paste0("log10",features_qc[1:6]), features_qc[7:9], "qcCellsPassed"), function(f) {
+  lapply(c(paste0("log10",features_qc[c(1:6)]), features_qc[7:9], "qcCellsPassed"), function(f) {
     pdf(paste0(outDIR, "/spatialQC/coreQC_spatial_", f, ".pdf"), h=5, w=5)
     print(ImageFeaturePlot(
       dat, features = f, size=0.1, border.color="white", border.size=0.1))
@@ -180,23 +189,59 @@ QClogf = capture.output({
   ]
 })
 
+print("Filter cells")
 passedCells = rownames(dat@meta.data)[
-  (dat@meta.data$qcFlagsCellCounts == "Pass" &
-  dat@meta.data$qcFlagsCellPropNeg == "Pass" &
-  dat@meta.data$qcFlagsCellComplex == "Pass" &
-  dat@meta.data$qcFlagsCellArea == "Pass" &
-  !dat@meta.data$qcCellsFlagged &
-  dat@meta.data$qcCellsPassed &
-  dat@meta.data$qcFlagsFOV == "Pass" &
-  dat@meta.data$Solidity > minSolidity &
-  dat@meta.data$Area.um2 > minArea.um2 &
-  dat@meta.data$nCount_RNA > minnCount_RNA)
+  (dat@meta.data$qcFlagsCellCounts == "Pass" & # Cell QC
+  dat@meta.data$qcFlagsCellPropNeg == "Pass" & # Cell QC
+  dat@meta.data$qcFlagsCellComplex == "Pass" & # Cell QC
+  dat@meta.data$qcFlagsCellArea == "Pass" & # Cell segmentation QC
+  !dat@meta.data$qcCellsFlagged & # Cell QC
+  dat@meta.data$qcCellsPassed &  # Cell QC
+  dat@meta.data$qcFlagsFOV == "Pass" & # FOV QC
+  dat@meta.data$Solidity > minSolidity & # Cell segmentation QC
+  dat@meta.data$Area.um2 > minArea.um2 & # Cell segmentation QC
+  dat@meta.data$nCount_RNA > minnCount_RNA) # Cell QC
 ]
+
+print("Only keep genes that non-0 counts in more than 5 cells ...")
+passedGenes = 
+  rownames(dat@assays$RNA@counts)[rowSums(dat@assays$RNA@counts>0) > 5]
 dat = UpdateSeuratObject(dat)
-dat_filtered = subset(dat, cells=passedCells)
-saveRDS(dat_filtered, paste0(OUTDIR, "/", dataset, "_filtered.RDS"))
+dat_filtered = subset(dat, cells=passedCells, features=passedGenes)
+# saveRDS(dat_filtered, paste0(OUTDIR, "/", dataset, "_filtered.RDS"))
 # dat_filtered = readRDS(paste0(OUTDIR, "/", dataset, "_filtered.RDS"))
 # dat_filtered$smallCells = ifelse(dat_filtered@meta.data$Area.um2 < 20, "small", "large")
+
+# print("Remove potential doublets with Area.um2 & nCount_RNA that are both 8 Median Absolute Deviation (MAD) away from the median of Area.um2 & nCount_RNA")
+# pdf(paste0( "./test.pdf"), h=10, w=10)
+# potentialDoublets = mapply(function(f, i) {
+#   median = median(dat@meta.data[[f]])
+#   MAD = i * median(abs(dat@meta.data[[f]]-median))
+#   potentialDoublets = dat@meta.data[[f]] > (median + MAD)
+#     print(ImageDimPlot(dat, fov = dataset, cols = "red", 
+#       cells = rownames(dat@meta.data)[potentialDoublets]) + 
+#         ggtitle(paste0(f,">",(median + MAD))))
+#   return(potentialDoublets)
+# },c("nCount_RNA", "Area.um2"), c(8, 8))
+# sum((potentialDoublets %>% rowSums())==2)
+# print(ImageDimPlot(dat, fov = dataset, cols = "red", 
+#       cells = rownames(dat@meta.data)[(potentialDoublets %>% rowSums())==2]) + 
+#         ggtitle("Combined"))
+# dev.off()
+
+print("Detect doublets using doubletFinder ...")
+source("rmDoublets.R")
+metadata = rmDoublets(data.filt=dat_filtered, doubletProportion= 0.074)
+pdf(paste0(outDIR, "/Doublets_QC.pdf"), h=10, w=10)
+print(ImageDimPlot(dat_filtered, fov = dataset, cols = "red", 
+      cells = rownames(dat_filtered@meta.data)[metadata$doublet_finder=="Doublet"]) + 
+        ggtitle("Doublets"))
+dev.off()
+dat_filtered@meta.data = metadata
+print("Remove doublets ...")
+dat_filtered = subset(dat, 
+  cells=rownames(dat_filtered@meta.data)[metadata$doublet_finder=="Singlet"])
+saveRDS(dat_filtered, paste0(OUTDIR, "/", dataset, "_filtered.RDS"))
 
 print("QC log after filtering ...")
 QCloga = capture.output({
@@ -206,6 +251,7 @@ QCloga = capture.output({
     mutate(qcCellsFlagged = ifelse(qcCellsFlagged, "Fail", "Pass")) %>%
     mutate(qcCellsPassed = ifelse(qcCellsPassed, "Pass", "Fail")) %>% 
     apply(., 2, table)
+  cat("\n")
   dat_filtered@meta.data[, features_qc] %>% apply(., 2, summary)
 })
 
@@ -223,3 +269,4 @@ quantile(dat@meta.data$nCount_RNA, probs=0.005)
 
 out = capture.output(sessionInfo())
 writeLines(out, paste0(OUTDIR, "/sessionInfo.txt"))
+
