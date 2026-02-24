@@ -22,7 +22,7 @@ minSolidity = args_list[["minSolidity"]]
 minArea.um2 = args_list[["minArea.um2"]]
 minnCount_RNA = args_list[["minnCount_RNA"]]
 INDIR = args_list[["INDIR"]]
-doubletProportion = args_list[["doubletProportion"]]
+doubletProportion = as.numeric(args_list[["doubletProportion"]])
 print(minnCount_RNA)
 # dataset = "Eleni_Female"
 # outdir = "../results/QC/"
@@ -31,6 +31,8 @@ print(minnCount_RNA)
 # minnCount_RNA = 25
 # doubletProportion = 0.074
 # INDIR = "/cfs/klemming/projects/supr/naiss2026-4-253/data/Shared_Folder/"
+
+
 
 
 rmDoublets = function(data.filt, doubletProportion= 0.074) {
