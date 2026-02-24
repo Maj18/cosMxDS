@@ -286,6 +286,8 @@ dat_filtered = subset(dat, cells=passedCells, features=passedGenes)
 
 print("Detect doublets using doubletFinder ...")
 # source("rmDoublets.R")
+rm(dat)
+gc()
 metadata = rmDoublets(data.filt=dat_filtered, doubletProportion= doubletProportion)
 pdf(paste0(outDIR, "/Doublets_QC.pdf"), h=10, w=10)
 print(ImageDimPlot(dat_filtered, fov = dataset, cols = "red", 
@@ -294,7 +296,7 @@ print(ImageDimPlot(dat_filtered, fov = dataset, cols = "red",
 dev.off()
 dat_filtered@meta.data = metadata
 print("Remove doublets ...")
-dat_filtered = subset(dat, 
+dat_filtered = subset(dat_filtered, 
   cells=rownames(dat_filtered@meta.data)[metadata$doublet_finder=="Singlet"])
 saveRDS(dat_filtered, paste0(OUTDIR, "/", dataset, "_filtered.RDS"))
 
@@ -321,8 +323,8 @@ writeLines(QClog, paste0(OUTDIR, "/QClog.txt"))
 print("Plot QC after filteirng ...")
 outDIR2=paste0(OUTDIR, "/afterFiltering/")
 dir.create(outDIR2, recursive=T, showWarnings=FALSE)
-plotQC(dat, outDIR=outDIR2)
-quantile(dat@meta.data$nCount_RNA, probs=0.005)
+plotQC(dat_filtered, outDIR=outDIR2)
+quantile(dat_filtered@meta.data$nCount_RNA, probs=0.005)
 
 out = capture.output(sessionInfo())
 writeLines(out, paste0(OUTDIR, "/sessionInfo.txt"))
