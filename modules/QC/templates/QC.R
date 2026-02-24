@@ -23,7 +23,9 @@ minArea.um2 = args_list[["minArea.um2"]]
 minnCount_RNA = args_list[["minnCount_RNA"]]
 INDIR = args_list[["INDIR"]]
 doubletProportion = as.numeric(args_list[["doubletProportion"]])
+numCore = as.numeric(args_list[["numCore"]])
 print(minnCount_RNA)
+
 # dataset = "Eleni_Female"
 # outdir = "../results/QC/"
 # minSolidity = 0.5
@@ -31,13 +33,15 @@ print(minnCount_RNA)
 # minnCount_RNA = 25
 # doubletProportion = 0.074
 # INDIR = "/cfs/klemming/projects/supr/naiss2026-4-253/data/Shared_Folder/"
+# numCore = 4
 
 
 
 
-rmDoublets = function(data.filt, doubletProportion= 0.074) {
+rmDoublets = function(data.filt, doubletProportion= 0.074, numCore=1) {
   # before doing doublet detection we need to run scaling, variable gene selection and PCA, as well as UMAP for visualization. 
   # These steps will be explored in more detail in coming exercises.
+  data.filt@images = list()
   DefaultAssay(data.filt) = "RNA"
   data.filt = NormalizeData(data.filt)
   data.filt = ScaleData(data.filt)
@@ -58,7 +62,7 @@ rmDoublets = function(data.filt, doubletProportion= 0.074) {
 
   # pK identification (no ground-truth)
   # pK: neighborhood size, i.e. the number of neighbors (in percentage) to consider when calculating pANN
-  sweep.list = invisible(paramSweep(data.filt, PCs = 1:10, num.cores = 1))
+  sweep.list = invisible(paramSweep(data.filt, PCs = 1:10, num.cores = numCore/2))
   sweep.stats = summarizeSweep(sweep.list)
   pdf("find.pK.plots.pdf")
   bcmvn = find.pK(sweep.stats)
@@ -288,7 +292,8 @@ print("Detect doublets using doubletFinder ...")
 # source("rmDoublets.R")
 rm(dat)
 gc()
-metadata = rmDoublets(data.filt=dat_filtered, doubletProportion= doubletProportion)
+metadata = 
+  rmDoublets(data.filt=dat_filtered, doubletProportion= doubletProportion, numCore=numCore)
 pdf(paste0(outDIR, "/Doublets_QC.pdf"), h=10, w=10)
 print(ImageDimPlot(dat_filtered, fov = dataset, cols = "red", 
       cells = rownames(dat_filtered@meta.data)[metadata$doublet_finder=="Doublet"]) + 

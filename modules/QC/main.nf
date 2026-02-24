@@ -19,7 +19,7 @@ process QC {
     Rscript ${moduleDir}/templates/QC.R --batch ${batch} \
         --INDIR "${params.INDIR}" --outdir "." --minSolidity ${params.minSolidity} \
         --minArea.um2 ${params.minArea.um2} --minnCount_RNA ${params.minnCount_RNA} \
-        --doubletProportion ${params.doubletProportion}
+        --doubletProportion ${params.doubletProportion} --numCore ${params.cpus}
     """
 }
 
