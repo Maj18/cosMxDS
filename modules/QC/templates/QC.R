@@ -350,11 +350,11 @@ paste0(outDIR, "/Doublets/") %>%
     dir.create(., recursive=TRUE, showWarnings=FALSE)
 doubletCols = grep("doubletProportion_", colnames(metadata), value=TRUE)
 lapply(doubletCols, function(doubletCol) {
-  pdf(paste0(outDIR, "/Doublets/coreQC.pdf"), h=7.5, w=12)
+  pdf(paste0(outDIR, "/Doublets/coreQC_", doubletCol, ".pdf"), h=7.5, w=12)
     print(VlnPlot(dat_filtered, features=features_qc, 
           ncol=3, pt.size=0, split.by=doubletCol, group.by="Tissue"))
   dev.off()
-  pdf(paste0(outDIR, "/Doublets/Doublets_spatialQC.pdf"), h=10, w=10)
+  pdf(paste0(outDIR, "/Doublets/Doublets_spatialQC_", doubletCol, ".pdf"), h=10, w=10)
     print(ImageDimPlot(dat_filtered, fov = dataset, cols = "red", 
       cells = rownames(dat_filtered@meta.data)[dat_filtered@meta.data[[doubletCol]]=="Doublet"]) + 
         ggtitle(doubletCol))
