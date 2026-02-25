@@ -36,7 +36,7 @@ workflow ENTRY_QC {
 
 workflow {
     // QC
-    atch = Channel.from(params.batch.split(','))
+    batch = Channel.from(params.batch.split(','))
     QC_workflow(batch)
 
 }
