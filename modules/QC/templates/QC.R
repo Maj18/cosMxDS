@@ -327,9 +327,9 @@ metadatas = lapply(tissue.list, function(tissue) {
     doubletProportion= doubletProportion,
     numCore=numCore)
 }) 
-
+paste0(metadatas, paste0(outDIR, "/Doublets/metadatas.RDS"))
 if(length(metadatas[[1]])==3) {
-  metadata = lapply(1:3, function(i) {
+  metadata = lapply(names(metadatas[[1]]), function(i) {
     m = lapply(metadatas, function(tissue) {
       tissue[[i]]
     }) %>% Reduce(rbind, .) %>% as.data.frame()
