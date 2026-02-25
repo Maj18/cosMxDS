@@ -14,10 +14,10 @@ process QC {
     output:
         path("${batch}/afterFiltering"), emit: QCout_afterFiltering_dir
         path("${batch}/beforeFiltering"), emit: QCout_beforeFiltering_dir
-        file("${batch}/Eleni_Male_filtered.RDS"), emit: Seuratobject_filtered
-        file("${batch}/Tissue.pdf"), emit: Tissue_figs
-        file("${batch}/sessionInfo.txt"), emit: sessionInfo
-        file("${batch}/QClog.txt"), emit: QClog
+        path("${batch}/Eleni_Male_filtered.RDS"), emit: Seuratobject_filtered
+        path("${batch}/Tissue.pdf"), emit: Tissue_figs
+        path("${batch}/sessionInfo.txt"), emit: sessionInfo
+        path("${batch}/QClog.txt"), emit: QClog
 
     script:
     """
