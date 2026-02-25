@@ -25,6 +25,7 @@ INDIR = args_list[["INDIR"]]
 doubletProportion = as.numeric(args_list[["doubletProportion"]])
 numCore = as.numeric(args_list[["numCore"]])
 print(minnCount_RNA)
+print(doubletProportion)
 
 if (length(doubletProportion)>1) {
   stop("Error: doubletProportion must either be NULL or a single integer value!")
