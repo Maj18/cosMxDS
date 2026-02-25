@@ -44,13 +44,13 @@ findDoublets = function(data.filt, doubletProportion= NULL, numCore=1) {
     # before doing doublet detection we need to run scaling, variable gene selection and PCA, as well as UMAP for visualization. 
     # These steps will be explored in more detail in coming exercises.
     # Remove unnecessary:
-    data.filt@images = list()
-    data.filt = DietSeurat(
-      object = data.filt,
-      assays = "RNA",       # keep only RNA
-      counts = TRUE,        # keep counts
-      data = TRUE           # keep normalized data
-    )
+    # data.filt@images = list()
+    # data.filt = DietSeurat(
+    #   object = data.filt,
+    #   assays = "RNA",       # keep only RNA
+    #   counts = TRUE,        # keep counts
+    #   data = TRUE           # keep normalized data
+    # )
 
     DefaultAssay(data.filt) = "RNA"
     data.filt = NormalizeData(data.filt)
@@ -99,7 +99,7 @@ findDoublets = function(data.filt, doubletProportion= NULL, numCore=1) {
         return(metadata)
     }
 
-    if (is.na(doubletProportion)|is.null(doubletProportion)) {
+    if (doubletProportion=="null"||doubletProportion==""||is.na(doubletProportion)||is.null(doubletProportion)) {
       doubletProportion_list = c(0.02, 0.05, 0.08)
       metadata = lapply(doubletProportion_list, function(d) {
         runDF(doubletProportion=d, 
@@ -242,16 +242,17 @@ features_qc = c(
     "propNegative",
     "percOfDataFromError"
 )
-QClogb = capture.output({
-  cat("Before filtering...\n")
-  dat@meta.data[, features_qc] %>% apply(., 2, summary)
-  flags = c("qcFlagsCellCounts",
+flags = c("qcFlagsCellCounts",
   "qcFlagsCellPropNeg",
   "qcFlagsCellComplex",
   "qcFlagsCellArea",
   "qcCellsFlagged",
   "qcCellsPassed",
   "qcFlagsFOV")
+
+QClogb = capture.output({
+  cat("Before filtering...\n")
+  dat@meta.data[, features_qc] %>% apply(., 2, summary)
   grep("qc", colnames(dat@meta.data), value=T)
   print(dat@meta.data[, flags] %>%
     as.data.frame() %>%
@@ -321,19 +322,34 @@ print("Detect doublets using doubletFinder ...")
 # source("rmDoublets.R")
 rm(dat)
 gc()
-tissue.list = SplitObject(dat_filtered, split.by = "Tissue")
-metadatas = lapply(tissue.list, function(tissue) {
-  findDoublets(data.filt=tissue, 
+temp = dat_filtered
+temp@images = list()
+temp = DietSeurat(
+      object = temp,
+      assays = "RNA",       # keep only RNA
+      counts = TRUE,        # keep counts
+      data = TRUE           # keep normalized data
+)
+tissue.list = SplitObject(temp, split.by = "Tissue")
+metadatas = lapply(names(tissue.list), function(t) {
+  print(t)
+  tissue = tissue.list[[t]]
+  # cells.sample = sample(Cells(tissue), 1000)
+  # tissue = subset(tissue, cells = cells.sample)
+  dat = findDoublets(data.filt=tissue, 
     doubletProportion= doubletProportion,
     numCore=numCore)
-}) 
+  return(dat)
+}) %>% setNames(names(tissue.list))
 paste0(metadatas, paste0(outDIR, "/Doublets/metadatas.RDS"))
 if(length(metadatas[[1]])==3) {
   metadata = lapply(names(metadatas[[1]]), function(i) {
     m = lapply(metadatas, function(tissue) {
-      tissue[[i]]
+      mdat = tissue[[i]]
+      mdat[[grep("pANN_", colnames(mdat), value=TRUE)]]=NULL
+      mdat
     }) %>% Reduce(rbind, .) %>% as.data.frame()
-    m[[names(metadatas[[1]])[i]]] = m$doublet_finder
+    m[[i]] = m$doublet_finder
     m[,ncol(m),drop=FALSE]
   }) %>% Reduce(cbind, .)
 } else {
@@ -341,6 +357,7 @@ if(length(metadatas[[1]])==3) {
   colnames(metadata)[ncol(metadata)] = 
     paste0("doubletProportion_", doubletProportion)
   metadata = metadata[, ncol(metadata), drop=FALSE]
+  metadata[[grep("pANN_", colnames(metadata), value=TRUE)]]=NULL
 }
 dat_filtered@meta.data = 
   cbind(dat_filtered@meta.data, metadata[rownames(dat_filtered@meta.data),])
@@ -354,6 +371,7 @@ lapply(doubletCols, function(doubletCol) {
     print(VlnPlot(dat_filtered, features=features_qc, 
           ncol=3, pt.size=0, split.by=doubletCol, group.by="Tissue"))
   dev.off()
+  Idents(dat_filtered) = dataset
   pdf(paste0(outDIR, "/Doublets/Doublets_spatialQC_", doubletCol, ".pdf"), h=10, w=10)
     print(ImageDimPlot(dat_filtered, fov = dataset, cols = "red", 
       cells = rownames(dat_filtered@meta.data)[dat_filtered@meta.data[[doubletCol]]=="Doublet"]) + 
@@ -371,12 +389,13 @@ saveRDS(dat_filtered, paste0(OUTDIR, "/", dataset, "_filtered.RDS"))
 print("QC log after filtering ...")
 QCloga = capture.output({
     cat("\n")
-    print(dat_filtered@meta.data[, grep("doubletProportion_", colnames(dat_filtered@meta.data), value=TRUE), drop=FALSE] %>%
+    print(dat_filtered@meta.data[, grep("doubletProportion_", 
+      colnames(dat_filtered@meta.data), value=TRUE), drop=FALSE] %>%
           apply(., 2, table))
     cat("\n")
     cat("After filtering...\n")
     print(dat_filtered@meta.data[, flags] %>%
-      as.data.frame() %>%
+      # as.data.frame() %>%
       mutate(qcCellsFlagged = ifelse(qcCellsFlagged, "Fail", "Pass")) %>%
       mutate(qcCellsPassed = ifelse(qcCellsPassed, "Pass", "Fail")) %>% 
       apply(., 2, table))
