@@ -103,11 +103,14 @@ findDoublets = function(data.filt, doubletProportion= NULL, numCore=1) {
     }
 
     if (doubletProportion=="null"||doubletProportion==""||is.na(doubletProportion)||is.null(doubletProportion)) {
+      print("Run doubletFinder ...")
       doubletProportion_list = c(0.02, 0.05, 0.08)
       metadata = lapply(doubletProportion_list, function(d) {
-        runDF(doubletProportion=d, 
+        print(d)
+        t = runDF(doubletProportion=d, 
               data.filt=data.filt, 
               optimal.pk=optimal.pk)
+        return(t)
       }) %>% setNames(paste0("doubletProportion_", doubletProportion_list))
     } else {
       metadata = runDF(doubletProportion=doubletProportion, 
@@ -301,6 +304,7 @@ print("Only keep genes that have non-0 counts in more than 5 cells ...")
 passedGenes = 
   rownames(dat@assays$RNA@counts)[rowSums(dat@assays$RNA@counts>0) > 5]
 dat_filtered = subset(dat, cells=passedCells, features=passedGenes)
+
 # saveRDS(dat_filtered, paste0(OUTDIR, "/", dataset, "_filtered.RDS"))
 # dat_filtered = readRDS(paste0(OUTDIR, "/", dataset, "_filtered.RDS"))
 # dat_filtered$smallCells = ifelse(dat_filtered@meta.data$Area.um2 < 20, "small", "large")
@@ -344,7 +348,13 @@ metadatas = lapply(names(tissue.list), function(t) {
     numCore=numCore)
   return(dat)
 }) %>% setNames(names(tissue.list))
-paste0(metadatas, paste0(outDIR, "/Doublets/metadatas.RDS"))
+
+print("Save doublets info ...")
+paste0(outDIR, "/Doublets/") %>% 
+    dir.create(., recursive=TRUE, showWarnings=FALSE)
+saveRDS(metadatas, paste0(outDIR, "/Doublets/Doublet_metadatas.RDS"))
+
+print("Reformulate the doublet inforamtion ...")
 if(length(metadatas[[1]])==3) {
   metadata = lapply(names(metadatas[[1]]), function(i) {
     m = lapply(metadatas, function(tissue) {
@@ -362,18 +372,19 @@ if(length(metadatas[[1]])==3) {
   metadata = metadata[, ncol(metadata), drop=FALSE]
   metadata[[grep("pANN_", colnames(metadata), value=TRUE)]]=NULL
 }
+
+print("Add doublet information to the metadata of the Seurat object ... ")
 dat_filtered@meta.data = 
   cbind(dat_filtered@meta.data, metadata[rownames(dat_filtered@meta.data),])
 
 print("Doublet QC ...")
-paste0(outDIR, "/Doublets/") %>% 
-    dir.create(., recursive=TRUE, showWarnings=FALSE)
 doubletCols = grep("doubletProportion_", colnames(metadata), value=TRUE)
 lapply(doubletCols, function(doubletCol) {
   pdf(paste0(outDIR, "/Doublets/coreQC_", doubletCol, ".pdf"), h=7.5, w=12)
     print(VlnPlot(dat_filtered, features=features_qc, 
           ncol=3, pt.size=0, split.by=doubletCol, group.by="Tissue"))
   dev.off()
+  print("Doublet spatial QC ... ")
   Idents(dat_filtered) = dataset
   pdf(paste0(outDIR, "/Doublets/Doublets_spatialQC_", doubletCol, ".pdf"), h=10, w=10)
     print(ImageDimPlot(dat_filtered, fov = dataset, cols = "red", 
@@ -386,6 +397,7 @@ lapply(doubletCols, function(doubletCol) {
 # dat_filtered = subset(dat_filtered, 
 #   cells=rownames(dat_filtered@meta.data)[metadata$doublet_finder=="Singlet"])
 print(dat_filtered)
+print("Save the seurat object with doublet inforamtion...")
 saveRDS(dat_filtered, paste0(OUTDIR, "/", dataset, "_filtered.RDS"))
 
 
@@ -414,10 +426,10 @@ writeLines(QClog, paste0(OUTDIR, "/QClog.txt"))
 print("Plot QC after filteirng ...")
 outDIR2=paste0(OUTDIR, "/afterFiltering/")
 dir.create(outDIR2, recursive=T, showWarnings=FALSE)
-plotQC(dat_filtered, 
-        outDIR=outDIR2)
+plotQC(dat_filtered, outDIR=outDIR2)
 # quantile(dat_filtered@meta.data$nCount_RNA, probs=0.005)
 
+print("Save sessionInfo ... ")
 out = capture.output(sessionInfo())
 writeLines(out, paste0(OUTDIR, "/sessionInfo.txt"))
 

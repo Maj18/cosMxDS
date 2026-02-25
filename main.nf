@@ -34,6 +34,13 @@ workflow ENTRY_QC {
     QC_workflow(batch)
 }
 
+workflow {
+    // QC
+    atch = Channel.from(params.batch.split(','))
+    QC_workflow(batch)
+
+}
+
 workflow.onComplete {
     println( workflow.success ? """
         Pipeline execution summary
