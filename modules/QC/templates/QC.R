@@ -99,10 +99,10 @@ findDoublets = function(data.filt, doubletProportion= NULL, numCore=1) {
         return(metadata)
     }
 
-    if (is.null(doubletProportion)) {
+    if (is.na(doubletProportion)|is.null(doubletProportion)) {
       doubletProportion_list = c(0.02, 0.05, 0.08)
-      metadata = lapply(doubletProportion_list, function(doubletProportion) {
-        runDF(doubletProportion=doubletProportion, 
+      metadata = lapply(doubletProportion_list, function(d) {
+        runDF(doubletProportion=d, 
               data.filt=data.filt, 
               optimal.pk=optimal.pk)
       }) %>% setNames(paste0("doubletProportion_", doubletProportion_list))
