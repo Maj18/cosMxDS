@@ -18,14 +18,16 @@ print(args_list)
 
 dataset = args_list[["batch"]]
 outdir = args_list[["outdir"]]
-minSolidity = args_list[["minSolidity"]]
-minArea.um2 = args_list[["minArea.um2"]]
-minnCount_RNA = args_list[["minnCount_RNA"]]
+minSolidity = as.numeric(args_list[["minSolidity"]])
+minArea.um2 = as.numeric(args_list[["minArea.um2"]])
+minnCount_RNA = as.numeric(args_list[["minnCount_RNA"]])
 INDIR = args_list[["INDIR"]]
 doubletProportion = as.numeric(args_list[["doubletProportion"]])
 numCore = as.numeric(args_list[["numCore"]])
+print(minSolidity)
 print(minnCount_RNA)
 print(doubletProportion)
+print(numCore)
 
 if (length(doubletProportion)>1) {
   stop("Error: doubletProportion must either be NULL or a single integer value!")
