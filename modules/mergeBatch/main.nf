@@ -17,7 +17,7 @@ process mergeBatch {
 
     script:
     """
-    Rscript ${moduleDir}/templates/mergeBatch.R --batches ${batches} \
+    Rscript ${moduleDir}/templates/mergeBatch.R --batches "${batches}" \
         --INFILES "${INFILES}" --outdir "." 
     """
 }
