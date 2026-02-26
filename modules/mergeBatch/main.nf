@@ -9,7 +9,7 @@ process mergeBatch {
         'docker://yuanli202004/seurat5.4_doubletfinder:latest' }"
 
     input:
-        tuble(batches, INFILES)
+        tuble(val(batches), val(INFILES))
 
     output:
         path("${params.outdir}/QC/coreQC_all.pdf"), emit: coreQC
