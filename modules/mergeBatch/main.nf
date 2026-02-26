@@ -12,8 +12,8 @@ process mergeBatch {
         tuple(val(batches), val(INFILES))
 
     output:
-        path("${params.outdir}/coreQC_all.pdf"), emit: coreQC
-        path("${params.outdir}/Summary_all.csv"), emit: summary
+        path("coreQC_all.pdf"), emit: coreQC
+        path("Summary_all.csv"), emit: summary
 
     script:
     """
