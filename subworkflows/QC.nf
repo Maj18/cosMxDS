@@ -1,5 +1,5 @@
 include { QC } from '../modules/QC'
-include { findDoublets } from '../modules/Doublets'
+include { findDoublets } from '../modules/doublets'
 include { mergeBatch } from '../modules/mergeBatch'
 
 workflow QC_workflow {
