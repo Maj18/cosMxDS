@@ -18,7 +18,7 @@ print(args_list)
 
 batches = args_list[["batches"]] %>% strsplit(.,",") %>% .[[1]]
 INFILES = args_list[["INFILES"]] %>% strsplit(.,",") %>% .[[1]]
-outdir = paste0(args_list[["outdir"]], "/QC/")
+outdir = args_list[["outdir"]]
 outdir %>% dir.create(., recursive=TRUE, showWarnings=FALSE)
 
 print(batches)

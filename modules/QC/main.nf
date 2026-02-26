@@ -1,5 +1,5 @@
 process QC {
-    publishDir "${params.outdir}/",
+    publishDir "${params.outdir}/QC/",
         mode: 'copy'
     tag "QC"
     label "highMemMT2"

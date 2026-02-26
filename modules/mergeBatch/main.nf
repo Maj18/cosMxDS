@@ -1,5 +1,5 @@
 process mergeBatch {
-    publishDir "${params.outdir}/",
+    publishDir "${params.outdir}/QC/",
         mode: 'copy'
     tag "QC"
     label "highMemMT1"
@@ -12,8 +12,8 @@ process mergeBatch {
         tuple(val(batches), val(INFILES))
 
     output:
-        path("${params.outdir}/QC/coreQC_all.pdf"), emit: coreQC
-        path("${params.outdir}/QC/Summary_all.csv"), emit: summary
+        path("${params.outdir}/coreQC_all.pdf"), emit: coreQC
+        path("${params.outdir}/Summary_all.csv"), emit: summary
 
     script:
     """
