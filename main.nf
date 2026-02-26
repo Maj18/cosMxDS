@@ -28,10 +28,18 @@ println """\
 
 // include { FILTERBAM } from '../modules/FILTERBAM'
 include { QC_workflow } from './subworkflows/QC.nf'
+include { mergeBatch } from '../modules/mergeBatch'
 
 workflow ENTRY_QC {
     batch = Channel.from(params.batch.split(','))
     QC_workflow(batch)
+}
+
+workflow ENTRY_mergeData {
+    batches = Channel.value(params.batch)
+    INFILES = Channel.value(params.INFILES)
+    ch_combined = batches.combine(INFILES)
+    mergeBatch(ch_combined)
 }
 
 workflow {
