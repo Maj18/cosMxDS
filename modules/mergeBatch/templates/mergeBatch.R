@@ -13,8 +13,14 @@ while (i <= length(args)) {
     i = i + 1
   }
 }
-
 print(args_list)
+
+print("Load packages...")
+library(Seurat)
+library(SeuratData)
+library(ggplot2)
+library(patchwork)
+library(dplyr)
 
 batches = args_list[["batches"]] %>% strsplit(.,",") %>% .[[1]]
 INFILES = args_list[["INFILES"]] %>% strsplit(.,",") %>% .[[1]]
@@ -30,13 +36,6 @@ print(outdir)
 # INFILES = "../results/QC/Eleni_Female/Eleni_Female_filtered.RDS,../results/QC/Eleni_Female/Eleni_Female_filtered.RDS"
 # outdir = "../results/QC/"
 
-
-print("Load packages...")
-library(Seurat)
-library(SeuratData)
-library(ggplot2)
-library(patchwork)
-library(dplyr)
 
 print("Import seurat objects from all batches ...")
 dat.list = lapply(INFILES, function(INFILE) {
