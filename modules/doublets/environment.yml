@@ -1,0 +1,10 @@
+channels:
+- conda-forge
+- bioconda
+dependencies:
+- bioconda::r-seurat-data=0.2.2.9002
+- conda-forge::r-dplyr=1.2.0
+- conda-forge::r-ggplot2=4.0.2
+- conda-forge::r-patchwork=1.3.2
+- conda-forge::r-seurat=5.4.0
+
