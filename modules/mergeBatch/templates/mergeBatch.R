@@ -43,7 +43,11 @@ dat.list = lapply(INFILES, function(INFILE) {
 }) 
 
 print("Merge two batches")
-options(future.globals.maxSize = 50 * 1024^3)  # 50 GB
+library(future)
+plan("sequential")
+# optionally control memory
+options(future.globals.maxSize = Inf)
+# options(future.globals.maxSize = 50 * 1024^3)  # 50 GB
 dat = merge(dat.list[[1]], dat.list[[2]], add.cell.ids = gsub("Eleni_", "", batches))
 rm(dat.list)
 gc()
