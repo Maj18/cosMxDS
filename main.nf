@@ -27,8 +27,8 @@ println """\
 */
 
 // include { FILTERBAM } from '../modules/FILTERBAM'
-include { QC_workflow } from './subworkflows/QC.nf'
-include { mergeBatch } from './modules/mergeBatch'
+include { QC_workflow } from './subworkflows/1QC.nf'
+include { mergeBatch } from './modules/3mergeBatch'
 
 workflow ENTRY_QC {
     batch = Channel.from(params.batch.split(','))

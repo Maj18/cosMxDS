@@ -33,7 +33,7 @@ print(outdir)
 
 
 # batches = "Eleni_Female,Eleni_Male"
-# INFILES = "../results/QC/Eleni_Female/Eleni_Female_filtered.RDS,../results/QC/Eleni_Female/Eleni_Female_filtered.RDS"
+# INFILES = "../results/QC/Eleni_Female/Eleni_Female_filtered.RDS,../results/QC/Eleni_Male/Eleni_Male_filtered.RDS"
 # outdir = "../results/QC/"
 
 
@@ -51,6 +51,8 @@ options(future.globals.maxSize = Inf)
 dat = merge(dat.list[[1]], dat.list[[2]], add.cell.ids = gsub("Eleni_", "", batches))
 rm(dat.list)
 gc()
+saveRDS(dat, paste0(outdir, "All_filtered.RDS"))
+object.size(dat)
 
 print(summary cells by batch and tissue ...)
 plotQC = function(dat, outDIR=outdir) {
@@ -67,13 +69,15 @@ plotQC = function(dat, outDIR=outdir) {
     "percOfDataFromError"
     )
     dat@meta.data$Tissue = 
-      factor(dat@meta.data$Tissue, levels = c(paste0("Normal", 1:2), paste0("Injury", 1:2)))
+      factor(dat@meta.data$Tissue, 
+      levels = c(paste0("Normal", 1:2), paste0("Injury", 1:2)))
     print("Violin plot...")
     pdf(paste0(outDIR, "/coreQC_all.pdf"), h=7.5, w=12)
-    print(VlnPlot(dat, features = features_qc, ncol = 3, pt.size=0, group.by="Tissue"))
+    print(VlnPlot(dat, features = features_qc, 
+      ncol = 3, pt.size=0, group.by="Run_Tissue_name", split.by="Tissue"))
     dev.off()
     
-    summary = dat.list[[1]]@meta.data %>% as.data.frame() %>% 
+    summary = dat@meta.data %>% as.data.frame() %>% 
       group_by(Run_Tissue_name, Tissue) %>% summarize(
         CellNr = n(),
         mediannCount_RNA = median(nCount_RNA),
@@ -90,4 +94,4 @@ plotQC = function(dat, outDIR=outdir) {
 
 plotQC(dat, outDIR=outdir)
 
-saveRDS(dat, function(outdir, "All_filtered.RDS"))
+
